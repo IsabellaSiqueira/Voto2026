@@ -1,0 +1,1354 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>guia de cargos eleições 2026 — jogo interativo</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            wine: {
+              deep: '#2D141B',
+              main: '#401C26',
+              light: '#5E2E3C',
+              card: '#4E2431'
+            },
+            accent: '#FF9D00',
+            primaryRed: '#BF1836'
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            sora: ['Sora', 'sans-serif']
+          },
+          animation: {
+            'pulse-subtle': 'pulseSubtle 2s infinite ease-in-out',
+            'shake': 'shake 0.4s ease-in-out',
+            'bounce-subtle': 'bounceSubtle 1.5s infinite ease-in-out'
+          },
+          keyframes: {
+            pulseSubtle: {
+              '0%, 100%': { transform: 'scale(1)', opacity: '1' },
+              '50%': { transform: 'scale(1.02)', opacity: '0.95' }
+            },
+            shake: {
+              '0%, 100%': { transform: 'translateX(0)' },
+              '20%, 60%': { transform: 'translateX(-6px)' },
+              '40%, 80%': { transform: 'translateX(6px)' }
+            },
+            bounceSubtle: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-5px)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    /* Estilos adicionais para controle fino de rolagem, toque e transições */
+    body {
+      background-color: #2D141B;
+      color: #FFFFFF;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    .font-sora {
+      font-family: "Sora", sans-serif;
+    }
+    
+    /* Efeito de transição suave de tela */
+    .screen-fade {
+      transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+    }
+    
+    .screen-hidden {
+      display: none;
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    
+    .screen-active {
+      display: flex;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Estilo do botão de ação com o contraste triplo inegociável */
+    .btn-action {
+      background-color: #BF1836;
+      border: 2px solid #FF9D00;
+      color: #FFFFFF;
+      transition: all 0.2s ease-in-out;
+    }
+    .btn-action:hover, .btn-action:active {
+      background-color: #A3112B;
+      transform: scale(1.02);
+      box-shadow: 0 0 12px rgba(255, 157, 0, 0.4);
+    }
+    
+    /* Feedback correto/errado */
+    .card-correct {
+      border: 2px solid #22C55E;
+      background-color: rgba(34, 197, 94, 0.1);
+    }
+    
+    .card-wrong {
+      border: 2px solid #EF4444;
+      background-color: rgba(239, 68, 68, 0.1);
+    }
+    
+    /* Shake para erro */
+    .animate-shake {
+      animation: shake 0.4s ease-in-out;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #401C26;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #FF9D00;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex justify-center items-center p-0 md:p-4 bg-wine-deep">
+
+  <!-- Container principal do Story, simulando formato mobile em telas maiores -->
+  <main class="w-full max-w-[430px] h-screen md:h-[820px] md:max-h-[90vh] bg-wine-main md:rounded-3xl shadow-2xl relative overflow-hidden flex flex-col justify-between" id="app-container">
+    
+    <!-- BARRA DE PROGRESSO NO TOPO (efeito Zeigarnik) -->
+    <header class="w-full pt-4 px-5 z-20">
+      <div class="flex items-center justify-between mb-1.5">
+        <span class="text-[10px] font-mono tracking-wider text-accent font-semibold" id="stepper-label">etapa 1 de 5</span>
+        <div class="flex space-x-1" id="step-dots">
+          <div class="w-2 h-2 rounded-full bg-accent"></div>
+          <div class="w-2 h-2 rounded-full bg-wine-light"></div>
+          <div class="w-2 h-2 rounded-full bg-wine-light"></div>
+          <div class="w-2 h-2 rounded-full bg-wine-light"></div>
+          <div class="w-2 h-2 rounded-full bg-wine-light"></div>
+        </div>
+      </div>
+      <!-- Barra fina de progresso -->
+      <div class="w-full h-1 bg-wine-deep rounded-full overflow-hidden">
+        <div id="progress-bar" class="h-full bg-accent rounded-full transition-all duration-300 w-1/5"></div>
+      </div>
+    </header>
+
+    <!-- ÁREA CENTRAL DE CONTEÚDO DINÂMICO (TELAS) -->
+    <div class="flex-1 w-full relative flex flex-col justify-start px-5 pb-5 overflow-y-auto mt-4" id="screens-wrapper">
+      
+      <!-- ==============================================
+           TELA DE INTRO / BOAS-VINDAS
+           ============================================== -->
+      <section id="screen-intro" class="screen-fade screen-active flex flex-col justify-between h-full py-2">
+        <div class="flex-1 flex flex-col justify-center items-center text-center space-y-6">
+          <!-- Ícone animado livre de svgs complexos -->
+          <div class="w-16 h-16 rounded-full bg-accent flex items-center justify-center text-3xl shadow-lg border border-white/20 animate-bounce-subtle">
+            🗳️
+          </div>
+          
+          <h1 class="font-sora text-3xl font-extrabold tracking-tight text-white leading-tight">
+            você sabe o que tá fazendo com o seu <span class="text-accent">voto</span> em 2026?
+          </h1>
+          
+          <p class="text-sm font-medium text-white/80 max-w-[320px] leading-relaxed">
+            o brasil escolhe 6 cargos na urna eletrônica daqui a pouco. você sabe o que cada um faz de verdade, ou tá só fingindo que entende?
+          </p>
+          
+          <div class="bg-wine-card/60 border border-white/5 rounded-2xl p-4 w-full text-left space-y-2">
+            <span class="text-[10px] uppercase font-bold tracking-wider text-accent">por que jogar?</span>
+            <p class="text-xs text-white/70 leading-relaxed">
+              • descubra o seu perfil de preocupações cívicas<br>
+              • teste se você cai no zap fake da família<br>
+              • entenda o bizarro 'combo' secreto do senado<br>
+              • sem chatice, sem partidarismo, direto ao ponto
+            </p>
+          </div>
+        </div>
+        
+        <div class="pt-4 flex flex-col gap-2">
+          <button onclick="changeScreen('intro', 'vaga')" class="btn-action w-full py-4 rounded-xl font-sora font-semibold text-sm shadow-md flex items-center justify-center space-x-2">
+            <span>bora descobrir! (2 min)</span>
+            <span>➔</span>
+          </button>
+          <span class="text-[10px] text-center text-white/40 block">experiência 100% apartidária e informativa</span>
+        </div>
+      </section>
+
+      <!-- ==============================================
+           TELA 1: VAGA ARROMBADA (Educação Funcional)
+           ============================================== -->
+      <section id="screen-vaga" class="screen-fade screen-hidden flex flex-col justify-between h-full py-1">
+        <div class="space-y-4">
+          <div class="flex justify-between items-center">
+            <span class="text-xs font-bold text-accent tracking-wider font-sora uppercase">vaga aberta cívica</span>
+            <span class="text-xs text-white/50" id="vaga-counter">vaga 1/5</span>
+          </div>
+          
+          <!-- Card de Vaga Estilo Story -->
+          <div class="bg-wine-card rounded-2xl p-5 border border-white/10 shadow-lg relative overflow-hidden animate-pulse-subtle" id="vaga-card">
+            <div class="absolute -top-12 -right-12 w-28 h-28 bg-accent/10 rounded-full blur-xl"></div>
+            <span class="text-[11px] font-mono text-accent uppercase font-bold tracking-widest block mb-2" id="vaga-tag">🚨 contrata-se com urgência</span>
+            <h2 class="font-sora text-lg font-bold text-white leading-snug mb-3" id="vaga-title">vaga ocupada...</h2>
+            <p id="vaga-desc" class="text-sm text-white/90 leading-relaxed font-sans placeholder-gray-300">
+              deveres: criar as leis que valem pro brasil inteiro, aprovar o orçamento da união...
+            </p>
+            
+            <div class="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-white/40 font-mono">
+              <span>local: brasília ou seu estado</span>
+              <span>requisito de idade: dependente</span>
+            </div>
+          </div>
+          
+          <!-- Opções de resposta -->
+          <div class="space-y-2.5 pt-2" id="vaga-options">
+            <!-- Injetado dinamicamente -->
+          </div>
+          
+          <!-- Caixa com Explicação / Feedback -->
+          <div id="vaga-feedback-box" class="hidden rounded-xl p-4 text-xs leading-relaxed transition-all duration-200">
+            <!-- Injetado dinamicamente -->
+          </div>
+        </div>
+
+        <div class="pt-4">
+          <button id="btn-next-vaga" onclick="nextVaga()" class="btn-action w-full py-3.5 rounded-xl font-sora font-semibold text-sm hidden">
+            confirmar e continuar ➔
+          </button>
+        </div>
+      </section>
+
+      <!-- ==============================================
+           TELA 2: ZAP DO CONDOMÍNIO (Combate Fake/Aplicação)
+           ============================================== -->
+      <section id="screen-zap" class="screen-fade screen-hidden flex flex-col justify-between h-full py-1">
+        <div class="flex-1 flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-accent tracking-wider font-sora uppercase">zap da família</span>
+              <span class="text-xs text-white/50" id="zap-counter">mensagem 1/3</span>
+            </div>
+            
+            <!-- Interface Chat WhatsApp estilizada -->
+            <div class="bg-[#1C0D11] rounded-2xl p-4 border border-white/5 h-[340px] flex flex-col justify-between relative shadow-inner">
+              <!-- Topo do Chat -->
+              <div class="border-b border-white/5 pb-2 mb-2 flex items-center space-x-2">
+                <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                <span class="text-[11px] text-white/60 font-mono font-bold tracking-wider">grupo: almoço de domingo 🏠</span>
+              </div>
+              
+              <!-- Janela de Mensagens em Scroll -->
+              <div class="flex-1 overflow-y-auto space-y-3.5 pr-1 flex flex-col justify-end pb-1" id="chat-messages-container">
+                <!-- Bolha do parente (Esquerda) -->
+                <div class="flex flex-col space-y-0.5 max-w-[85%] self-start" id="zap-bubble-left">
+                  <span class="text-[10px] font-bold text-emerald-400 pl-2" id="zap-sender">tia cleide 👵</span>
+                  <div class="bg-wine-card/80 border border-white/10 rounded-2xl rounded-tl-none p-3 shadow-md">
+                    <p class="text-xs text-white/90 leading-tight" id="zap-message">
+                      o teto da escola estadual do bairro caiu, vou cobrar do presidente.
+                    </p>
+                  </div>
+                  <span class="text-[8px] text-white/30 self-start pl-2">hoje, 16:48</span>
+                </div>
+                
+                <!-- Bolha de Resposta do Usuário (Direita - Surge após seleção) -->
+                <div class="flex flex-col space-y-0.5 max-w-[85%] self-end hidden" id="zap-bubble-right">
+                  <span class="text-[10px] font-bold text-accent pr-2 text-right">você</span>
+                  <div class="bg-accent/10 border border-accent/30 rounded-2xl rounded-tr-none p-3 shadow-md">
+                    <p class="text-xs text-white leading-tight" id="zap-reply-text">
+                      tia, escola estadual é com o governador, ele que cuida da educação no estado.
+                    </p>
+                  </div>
+                  <div class="flex justify-end items-center space-x-1 pr-2">
+                    <span class="text-[8px] text-white/30">entregue</span>
+                    <span class="text-sky-400 text-[10px]">✓✓</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Box de opções de correção (Botoes de mensagem simulando réplica) -->
+            <div id="zap-options-box" class="space-y-2 pt-2">
+              <span class="text-[10px] uppercase font-bold text-white/40 tracking-wider">escolha como responder:</span>
+              <div id="zap-buttons-container" class="space-y-2">
+                <!-- Injetado dinamicamente -->
+              </div>
+            </div>
+          </div>
+          
+          <!-- Box explicativo após responder -->
+          <div id="zap-explanation-box" class="hidden mt-3 rounded-xl p-3 bg-wine-card border-l-4 border-accent text-xs text-white/80 leading-relaxed">
+            <!-- Injetado dinamicamente -->
+          </div>
+        </div>
+
+        <div class="pt-4">
+          <button id="btn-next-zap" onclick="nextZap()" class="btn-action w-full py-3.5 rounded-xl font-sora font-semibold text-sm hidden">
+            enviar resposta e continuar ➔
+          </button>
+        </div>
+      </section>
+
+      <!-- ==============================================
+           TELA 3: COMBO SURPRESA (O Plot Twist do Senador)
+           ============================================== -->
+      <section id="screen-combo" class="screen-fade screen-hidden flex flex-col justify-between h-full py-1">
+        <div class="space-y-5 text-center flex-1 flex flex-col justify-center items-center">
+          <span class="text-xs font-bold text-accent tracking-wider font-sora uppercase">combo surpresa do legislativo</span>
+          
+          <!-- Caixa Animada do Senador -->
+          <div class="relative w-44 h-44 my-4 flex items-center justify-center" id="unbox-area">
+            <!-- Aura luminosa -->
+            <div id="box-glow" class="absolute inset-0 bg-accent/20 rounded-full blur-xl scale-95 transition-all duration-300"></div>
+            
+            <!-- Caixa visual do Senator -->
+            <div id="senator-box-model" onclick="triggerUnboxing()" class="w-36 h-36 bg-gradient-to-br from-wine-card to-wine-light border-2 border-accent rounded-3xl flex flex-col justify-center items-center shadow-2xl cursor-pointer relative z-10 transition-all duration-300 transform active:scale-95 hover:scale-105">
+              
+              <!-- Face da frente da caixa -->
+              <span class="text-4xl mb-1 animate-bounce-subtle">🎁</span>
+              <span class="font-sora text-[11px] font-bold text-accent tracking-widest uppercase">senador 2026</span>
+              <span class="text-[9px] text-white/50 italic mt-1">toque pra abrir!</span>
+              
+              <!-- Suplente 1 e 2 ocultados inicialmente que saltam fora -->
+              <div id="suplente-1" class="absolute -top-12 -left-8 w-14 h-14 bg-wine-deep border border-accent/40 rounded-full flex flex-col items-center justify-center text-[8px] text-center font-bold text-white shadow-lg opacity-0 pointer-events-none transform scale-50 transition-all duration-500 z-0">
+                <span class="text-lg">👤</span>
+                <span>1º suplente</span>
+              </div>
+              
+              <div id="suplente-2" class="absolute -top-10 -right-8 w-14 h-14 bg-wine-deep border border-accent/40 rounded-full flex flex-col items-center justify-center text-[8px] text-center font-bold text-white shadow-lg opacity-0 pointer-events-none transform scale-50 transition-all duration-500 z-0">
+                <span class="text-lg">👤</span>
+                <span>2º suplente</span>
+              </div>
+              
+              <!-- Elemento Ativo do Senador Principal -->
+              <div id="senador-avatar" class="absolute inset-0 bg-wine-deep border-2 border-accent rounded-3xl flex flex-col justify-center items-center opacity-0 pointer-events-none scale-90 transition-all duration-500 z-20">
+                <span class="text-4xl">🏛️</span>
+                <span class="font-sora text-xs font-bold text-white mt-1">seu senador</span>
+                <span class="text-[9px] text-accent font-semibold mt-0.5">mandato de 8 anos</span>
+              </div>
+            </div>
+          </div>
+          
+          <h2 class="font-sora text-xl font-bold tracking-tight text-white mb-1" id="unbox-heading">
+            toque na caixa para confirmar o voto em senador!
+          </h2>
+          
+          <p class="text-xs text-white/70 max-w-[310px] leading-relaxed" id="unbox-desc">
+            você vota em 2 senadores por estado em 2026. mas a sua cédula vem com algo escondido de fábrica. aperte acima para conferir o combo.
+          </p>
+        </div>
+
+        <div class="pt-4">
+          <button id="btn-next-combo" onclick="changeScreen('combo', 'urna')" class="btn-action w-full py-3.5 rounded-xl font-sora font-semibold text-sm hidden">
+            caramba, entendi! continuar ➔
+          </button>
+        </div>
+      </section>
+
+      <!-- ==============================================
+           TELA 4: FILA DA URNA ELECTRONICA (O Jogo de Ordem)
+           ============================================== -->
+      <section id="screen-urna" class="screen-fade screen-hidden flex flex-col justify-between h-full py-1">
+        <div class="space-y-4">
+          <div class="text-center space-y-1">
+            <span class="text-xs font-bold text-accent tracking-wider font-sora uppercase">organizando o dia da urna</span>
+            <h2 class="font-sora text-base font-bold text-white">qual é a ordem oficial da urna eletrônica?</h2>
+            <p class="text-[11px] text-white/60 leading-relaxed">
+              arranje os 6 cargos na ordem exata de votação com as setinhas ou clicando em duas cartas para trocá-las.
+            </p>
+          </div>
+          
+          <!-- Lista Interativa de Cargos -->
+          <div class="space-y-2 max-h-[360px] overflow-y-auto pr-1" id="sortable-list">
+            <!-- Injetado dinamicamente -->
+          </div>
+          
+          <!-- Banner explicativo de erro / sucesso -->
+          <div id="urna-feedback-banner" class="hidden rounded-xl p-3 text-xs leading-relaxed transition-all">
+            <!-- Injetado -->
+          </div>
+        </div>
+
+        <div class="pt-4 flex flex-col gap-2">
+          <button id="btn-validate-urna" onclick="validateUrnaOrder()" class="btn-action w-full py-3.5 rounded-xl font-sora font-semibold text-sm">
+            confirmar ordem dos cargos
+          </button>
+          <button id="btn-next-urna" onclick="changeScreen('urna', 'mapa')" class="btn-action w-full py-3.5 rounded-xl font-sora font-semibold text-sm hidden">
+            continuar para o mapa astral ➔
+          </button>
+        </div>
+      </section>
+
+      <!-- ==============================================
+           TELA 5: MAPA CÍVICO E CAPTURA DE LEAD
+           ============================================== -->
+      <section id="screen-mapa" class="screen-fade screen-hidden flex flex-col justify-between h-full py-1">
+        
+        <!-- PARTE 5A: O MINI QUIZ DO PERFIL (3 perguntas) -->
+        <div id="mapa-quiz-wrapper" class="space-y-4 flex-1 flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-accent tracking-wider font-sora uppercase">gerando seu mapa político</span>
+              <span class="text-xs text-white/50" id="mapa-q-counter">pergunta 1/3</span>
+            </div>
+            
+            <h2 class="font-sora text-lg font-bold text-white leading-snug" id="mapa-question">
+              o que mais tira sua paz no dia a dia?
+            </h2>
+            
+            <div class="space-y-2.5 pt-2" id="mapa-options-container">
+              <!-- Injetado dinamicamente -->
+            </div>
+          </div>
+          <p class="text-[10px] text-white/40 text-center leading-relaxed">
+            as dores do cotidiano mostram qual das instâncias políticas impacta mais você. sem ideologia, é pura matemática de competência pública!
+          </p>
+        </div>
+
+        <!-- PARTE 5B: CAPTURA DO LEAD (E-mail ou WhatsApp) -->
+        <div id="mapa-capture-wrapper" class="space-y-5 flex-1 flex flex-col justify-center hidden">
+          <div class="text-center space-y-2 mb-2">
+            <div class="w-14 h-14 rounded-full bg-accent/20 border border-accent/40 flex items-center justify-center text-2xl mx-auto shadow-md">
+              🔮
+            </div>
+            <h2 class="font-sora text-xl font-bold tracking-tight text-white leading-tight">
+              preparando seu mapa astral político 2026...
+            </h2>
+            <p class="text-xs text-white/70 max-w-[310px] mx-auto leading-relaxed">
+              calculamos quais cargos representam o miolo das suas dores cívicas. insira seu contato para fechar as contas e liberar o resultado personalizado.
+            </p>
+          </div>
+          
+          <!-- Formulário -->
+          <div class="bg-wine-card/80 border border-white/10 rounded-2xl p-5 space-y-4">
+            <div class="space-y-1">
+              <label for="lead-contact" class="text-[10px] uppercase font-bold text-accent tracking-wider block">seu melhor e-mail ou whatsapp:</label>
+              <input type="text" id="lead-contact" placeholder="exemplo@gmail.com ou (11) 99999-9999" class="w-full bg-wine-deep border border-white/20 rounded-xl px-4 py-3 text-xs text-white placeholder-white/30 focus:outline-none focus:border-accent font-sans">
+              <p id="lead-error" class="text-[10px] text-red-400 font-semibold hidden">por favor, digite um formato válido de e-mail ou número de telefone.</p>
+            </div>
+            
+            <div class="flex items-start space-x-2">
+              <input type="checkbox" id="lead-optin" checked class="mt-0.5 accent-accent w-3.5 h-3.5 rounded border-white/30 bg-wine-deep">
+              <label for="lead-optin" class="text-[10px] text-white/60 leading-none select-none">concordo em receber dicas fáceis sobre política inteligente e avisos de novos cursos.</label>
+            </div>
+            
+            <button onclick="handleLeadSubmit()" class="btn-action w-full py-3.5 rounded-xl font-sora font-semibold text-xs shadow-md">
+              revelar meu mapa astral político + tabela de pesca ➔
+            </button>
+          </div>
+        </div>
+
+        <!-- PARTE 5C: RESULTADO FINAL (O Mapa Astral Político) -->
+        <div id="mapa-result-wrapper" class="space-y-4 hidden flex-1">
+          <div class="text-center space-y-1">
+            <span class="text-[10px] font-mono tracking-wider text-accent uppercase font-semibold">suas estrelas políticas alinharam!</span>
+            <h2 class="font-sora text-xl font-extrabold text-white">seu mapa astral político 2026</h2>
+          </div>
+          
+          <!-- Quadro de Sol e Ascendente -->
+          <div class="grid grid-cols-2 gap-3 pb-1">
+            <!-- Sol -->
+            <div class="bg-gradient-to-br from-wine-card to-wine-light border border-accent/40 rounded-2xl p-3.5 text-center relative overflow-hidden">
+              <div class="absolute -bottom-6 -right-6 w-14 h-14 bg-accent/20 rounded-full blur-md"></div>
+              <span class="text-xl block mb-1">☀️ sol político</span>
+              <span class="text-[10px] text-white/50 uppercase font-bold tracking-wider block">está em</span>
+              <h3 class="font-sora text-sm font-bold text-accent mt-1" id="astral-sol">governador</h3>
+              <p class="text-[10px] text-white/70 leading-normal mt-1 max-h-[48px] overflow-hidden" id="astral-sol-desc">você foca em quem resolve de perto na segurança e saúde.</p>
+            </div>
+            <!-- Ascendente -->
+            <div class="bg-gradient-to-br from-wine-card to-wine-light border border-accent/40 rounded-2xl p-3.5 text-center relative overflow-hidden">
+              <div class="absolute -bottom-6 -right-6 w-14 h-14 bg-accent/20 rounded-full blur-md"></div>
+              <span class="text-xl block mb-1">🌙 ascendente</span>
+              <span class="text-[10px] text-white/50 uppercase font-bold tracking-wider block">gira em torno de</span>
+              <h3 class="font-sora text-sm font-bold text-accent mt-1" id="astral-ascendente">deputado federal</h3>
+              <p class="text-[10px] text-white/70 leading-normal mt-1 max-h-[48px] overflow-hidden" id="astral-asc-desc">preocupação genuína com as novas leis universais brasileiras.</p>
+            </div>
+          </div>
+          
+          <!-- Cédula de Cola (Cheat Sheet) -->
+          <div class="bg-[#1C0D11] border border-white/5 rounded-2xl p-4 space-y-2">
+            <span class="text-[10px] font-bold text-accent uppercase tracking-wider block">🗒️ colinha rápida - o que você decide em 2026:</span>
+            <div class="space-y-1.5 text-left text-[10px] leading-tight text-white/80 max-h-[140px] overflow-y-auto pr-1">
+              <p>• <strong class="text-white font-semibold">1º dep. federal:</strong> cria leis de cobertura nacional e aprova fluxo de impostos.</p>
+              <p>• <strong class="text-white font-semibold">2º dep. estadual:</strong> molda leis internas do estado e fiscaliza o caixa estadual.</p>
+              <p>• <strong class="text-white font-semibold">3º senador (vaga 1):</strong> aprova juízes constitucionais e representa o estado.</p>
+              <p>• <strong class="text-white font-semibold">4º senador (vaga 2):</strong> vem acoplado com 2 suplentes de brinde para o mandato.</p>
+              <p>• <strong class="text-white font-semibold">5º governador:</strong> chefia a polícia civil/militar, hospitais públicos e escolas estaduais.</p>
+              <p>• <strong class="text-white font-semibold flex items-center gap-1">6º presidente:</strong> gere macroeconomia, defesa internacional e diretrizes nacionais.</p>
+            </div>
+          </div>
+          
+          <!-- Mensagem Final & CTA -->
+          <div class="text-center space-y-3 pt-1">
+            <p class="text-[11px] text-white/70 leading-relaxed font-medium">
+              entendeu seus 6 votos em 3 minutos? imagina o que você aprende no política essencial, do zero e na ordem certa.
+            </p>
+            
+            <div class="flex flex-col gap-2">
+              <a id="cta-button-link" href="#" target="_blank" class="btn-action w-full py-3.5 rounded-xl font-sora font-semibold text-xs flex items-center justify-center space-x-2 shadow-lg">
+                <span>quero ser livre e entender de política de verdade ➔</span>
+              </a>
+              <button onclick="shareStory()" class="bg-wine-card hover:bg-wine-light text-white/80 border border-white/15 py-2.5 rounded-xl font-sans text-[11px] flex items-center justify-center space-x-1.5 transition-colors">
+                <span>📤 compartilhar no story ou copiar link</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+
+    <!-- RODAPÉ DA INTERFACE COM NOTAS -->
+    <footer class="w-full pb-4 pt-1 px-5 text-center text-[9px] text-white/30 tracking-tight font-mono border-t border-white/5 shrink-0 bg-wine-deep/40 z-10">
+      eleições gerais brasil • 4 de out de 2026 (1º turno) • 25 de out de 2026 (2º turno)
+    </footer>
+
+  </main>
+
+  <!-- ==============================================
+       LÓGICA JAVASCRIPT & CONFIGURAÇÕES EDITÁVEIS
+       ============================================== -->
+  <script>
+    // ==============================================
+    // OBJETO DE CONFIGURAÇÃO EDITÁVEL (CONFIG)
+    // ==============================================
+    const CONFIG = {
+      // url final do curso de politica rastreado por utms
+      ctaUrl: "https://politicaessencial.com/?utm_source=minisite&utm_medium=gamificacao&utm_campaign=cargos2026&utm_content=card_final",
+      
+      // dados estáticos dos cargos para relatórios e exibição
+      cargos: {
+        deputado_federal: {
+          nome: "deputado federal",
+          vagas: "513 vagas",
+          sistema: "sistema proporcional",
+          idadeMinima: 21,
+          resumo: "cria leis federais válidas no brasil inteiro, fiscaliza o poder executivo e define como distribuir impostos federais.",
+          solDesc: "sua vibração está direcionada para quem molda novas fronteiras legais no brasil e bate o martelo sobre capitais nacionais.",
+          ascDesc: "você valoriza a inteligência de quem estrutura a moldura constitucional que regula todos os cidadãos brasileiros uniformemente."
+        },
+        deputado_estadual: {
+          nome: "deputado estadual",
+          vagas: "1035 cadeiras",
+          sistema: "sistema proporcional",
+          idadeMinima: 21,
+          resumo: "cria leis válidas dentro do estado territorial, legisla sobre rodovias locais, impostos estaduais e fiscaliza a gestão do governador.",
+          solDesc: "você quer ver auditorias claras nas assembleias estaduais e tem interesse na criação de tributos territoriais inteligentes.",
+          ascDesc: "gosta da pegada de quem fiscaliza gastos regionais detalhadamente para evitar o desperdício de impostos domésticos estaduais."
+        },
+        senador: {
+          nome: "senador",
+          vagas: "54 das 81 cadeiras",
+          sistema: "sistema majoritário",
+          idadeMinima: 35,
+          resumo: "representa os estados em brasília, analisa tratados internacionais, aprova nomes indicados como ministros do STF e decide impeachment do executivo.",
+          solDesc: "seu coração está na diplomacia madura e nos freios constitucionais que temperam as grandes decisões de brasília.",
+          ascDesc: "você compreende o peso imenso que o senado tem para ratificar lideranças jurídicas cruciais e vigiar o plano do país de perto."
+        },
+        governador: {
+          nome: "governador e vice",
+          vagas: "27 chapas em disputa",
+          sistema: "sistema majoritário",
+          idadeMinima: 30,
+          resumo: "comanda pessoalmente as diretrizes estaduais, responde pela segurança pública (PM), administra hospitais públicos do estado e gere escolas estaduais.",
+          solDesc: "você foca exatamente em quem resolve as emergências locais que batem à porta: policiamento imediato, redes de saúde e educação estadual.",
+          ascDesc: "tem como ponto forte esperar forte liderança gerencial nas forças de segurança física e redes básicas regionais de bem-estar."
+        },
+        presidente: {
+          nome: "presidente e vice",
+          vagas: "1 chapa presidencial",
+          sistema: "sistema majoritário",
+          idadeMinima: 35,
+          resumo: "direciona macroeconomia, cuida das relações com outros países, estabelece o orçamento primário e define grandes eixos regulatórios de saúde e ciência.",
+          solDesc: "sua mira está na grande bússola federal brasileira: metas econômicas globais e a soberania exterior da nossa federação.",
+          ascDesc: "carrega uma intuição natural de que sem uma direção federal robusta e estruturação diplomática as finanças não avançam do solo."
+        }
+      },
+
+      // base de dados da tela 1: vaga arrombada
+      vagasQuest: [
+        {
+          id: "vaga_senador",
+          titulo: "vaga de tutor sênior do império",
+          descr: "deveres: aprovar juízes constitucionais do stf, sabatinar diplomatas, julgar presidente se a chapa esquentar, representar o estado. requisito: 35+ anos. contrato: longuíssimo de 8 anos inteiros (vem com 2 suplentes de brinde pra cochilar quando você viajar).",
+          opcoes: ["deputado federal", "senador", "governador", "presidente"],
+          respostaCorreta: "senador",
+          feedback: "exato. o senador representa as unidades da federação (estados) e tem mandato de 8 anos. bizarro que o voto vai pra ele, mas você decide 3 pessoas de uma vez, já que cada um tem de forma velada 2 suplentes de escopo corporativo."
+        },
+        {
+          id: "vaga_governador",
+          titulo: "gerente geral do território regional",
+          descr: "deveres: comandar as corporações locais da polícia militar e civil, administrar as emergências dos hospitais do estado, planejar o salário dos professores de escolas estaduais. requisito: 30+ anos. vem com vice de prontidão.",
+          opcoes: ["deputado estadual", "senador", "governador", "presidente"],
+          respostaCorreta: "governador",
+          feedback: "boa. o governador é o grande administrador estadual. segurança imediata urbana e a espinha dorsal de hospitais regionais de pronto-socorro estão totalmente sob as ordens dele."
+        },
+        {
+          id: "vaga_deputado_federal",
+          titulo: "engenheiro legislativo federal (brasil)",
+          descr: "deveres: escrever e reformar leis de abrangência nacional, autorizar ou vedar impostos federais, fiscalizar as contas do planalto diretamente na mesa do parlamento. requisito: 21+ anos. divide o salão com mais 512 colegas.",
+          opcoes: ["deputado federal", "deputado estadual", "senador", "governador"],
+          respostaCorreta: "deputado federal",
+          feedback: "na mosca. o deputado federal trabalha diretamente em brasília. ele redige projetos para taxas universais e vigia as transações dos cofres federais."
+        },
+        {
+          id: "vaga_deputado_estadual",
+          titulo: "arquiteto legislativo territorial (seu estado)",
+          descr: "deveres: criar propostas de lei internas aplicadas dentro do seu estado, taxar serviços zonais que não colidam com o país, auditar o uso das verbas do governador. requisito: 21+ anos. atua na assembleia legislativa.",
+          opcoes: ["deputado federal", "deputado estadual", "senador", "presidente"],
+          respostaCorreta: "deputado estadual",
+          feedback: "correto. os deputados estaduais legislam na assembleia estadual e propõem leis para as estâncias de transportes, tributos do estado e ajudam a ditar restrições locais."
+        },
+        {
+          id: "vaga_presidente",
+          titulo: "chefe supremo de estado & governo",
+          descr: "deveres: estabelecer as diretrizes unificadas de macroeconomia, fechar pactos de importação com outras potências, nomear comandos oficiais, propor o orçamento de investimentos federais gerais. requisito: 35+ anos.",
+          opcoes: ["deputado federal", "senador", "governador", "presidente"],
+          respostaCorreta: "presidente",
+          feedback: "perfeito. o presidente decide os eixos da política federal e lidera a nossa pátria internacionalmente."
+        }
+      ],
+
+      // base de dados da tela 2: zap do condominio
+      zapMensagens: [
+        {
+          id: "zap_escola",
+          remetente: "tia cleide 👵",
+          cor: "text-emerald-400",
+          mensagem: "as paredes da escola estadual do bairro estão caindo aos pedaços, vou entrar com uma petição direto pro presidente!",
+          opcoes: [
+            {
+              id: "a",
+              texto: "tia, escola estadual é assunto do governador. o presidente cuida de diretrizes gerais e institutos federais.",
+              correta: true,
+              feedback: "acertou. a administração física do colégio e sua zeladoria básica do estado são obrigações de infraestrutura sob cuidados do governador!"
+            },
+            {
+              id: "b",
+              texto: "isso aí tia, aproveita e pede pra ele dar uma reformada na nossa pracinha também.",
+              correta: false,
+              feedback: "xii, não. o presidente sequer opera escolas estaduais domésticas de bairro. o verdadeiro encarregado disso é o governador do estado!"
+            }
+          ]
+        },
+        {
+          id: "zap_dolar",
+          remetente: "tio beto 👨‍💼",
+          cor: "text-blue-400",
+          mensagem: "não aguento mais ver esse patamar do dólar subir para viajar. vou acionar o deputado estadual que elegemos pra dar uma canetada nisso!",
+          opcoes: [
+            {
+              id: "a",
+              texto: "tio, a caneta do deputado estadual só alcança assuntos regionais do estado. dólar é macroeconomia federal.",
+              correta: true,
+              feedback: "certinho. moedas e juros nacionais dependem de variáveis federais integradas e banco central, fora da órbita da assembleia legislativa."
+            },
+            {
+              id: "b",
+              texto: "tem que cobrar mesmo, ele ganha pra isso!",
+              correta: false,
+              feedback: "puxa, não. deputado estadual não tem pauta sobre macroeconomia federal de câmbio doméstico."
+            }
+          ]
+        },
+        {
+          id: "zap_seguranca",
+          remetente: "primo douglas 🧢",
+          cor: "text-purple-400",
+          mensagem: "nossa rua está de quebrar com assaltos frequentes de madrugada, cadê que o deputado federal manda reforço policial aqui?!",
+          opcoes: [
+            {
+              id: "a",
+              texto: "doug, quem comanda a secretaria de segurança do estado e despacha as patrulhas de viatura nas quadras é o governador.",
+              correta: true,
+              feedback: "perfeito. a polícia militar, focada no patrulhamento ativo de bairros, é direcionada pela governadoria estadual!"
+            },
+            {
+              id: "b",
+              texto: "verdade, vou mandar mensagem no chat do deputado de brasília pra ele resolver isso amanhã.",
+              correta: false,
+              feedback: "errado. deputados de brasília escrevem leis abstratas amplas. quem define rondas táticas locais e gerencia as viaturas PM de segurança é o governador."
+            }
+          ]
+        }
+      ],
+
+      // base de dados da tela 5: perguntas de perfil astral
+      mapaPerguntas: [
+        {
+          id: "dor_principal",
+          pergunta: "pensando rápido no Brasil atual, qual deficiência do cotidiano te irrita mais no âmago?",
+          opcoes: [
+            { valor: "saude", texto: "postos de saúde superlotados, sem remédios essenciais na rede básica", cargoFoco: "governador" },
+            { valor: "seguranca", texto: "medo permanente de ter o telefone furtado ou ser assaltado na rua", cargoFoco: "governador" },
+            { valor: "economia", texto: "inflação disfarçada que aperta os preços do mercado toda semana", cargoFoco: "presidente" },
+            { valor: "leis", texto: "sensação de impunidade e de que as leis nacionais são lentas demais", cargoFoco: "deputado_federal" }
+          ]
+        },
+        {
+          id: "prioridade_futuro",
+          pergunta: "se você ganhasse carta branca para aplicar uma canetada de melhoria imediata, para onde iria?",
+          opcoes: [
+            { valor: "reforma_leis", texto: "penalizar com severidade crimes digitais, golpes virtuais e preconceito", cargoFoco: "deputado_federal" },
+            { valor: "tributaria", texto: "desafogar o imposto sobre alimentos e eletrônicos de consumo diário", cargoFoco: "deputado_federal" },
+            { valor: "patrulhas", texto: "triplicar o recrutamento policial e investir em vigilância nos bairros", cargoFoco: "governador" },
+            { valor: "empregos", texto: "destravar créditos estudantis e abrir oportunidades de tecnologia e startups", cargoFoco: "presidente" }
+          ]
+        },
+        {
+          id: "lideranca_ideal",
+          pergunta: "sua mente se acalma mais ao ver governantes que agem de qual postura de liderança?",
+          opcoes: [
+            { valor: "fiscalizador", texto: "focados em depurar desvios, verificar contas e barrar regalias públicas", cargoFoco: "deputado_estadual" },
+            { valor: "executivo", texto: "práticos e rápidos na coordenação de equipes públicas e entrega de grandes de obras", cargoFoco: "governador" },
+            { valor: "moderador", texto: "arquitetos maduros que equilibram conflitos entre poderes antes de vetos pesados", cargoFoco: "senador" },
+            { valor: "visao_longa", texto: "visionários com táticas econômicas que projetam os decolares do país lá na frente", cargoFoco: "presidente" }
+          ]
+        }
+      ]
+    };
+
+    // ==============================================
+    // ESTADO DA SESSÃO EM MEMÓRIA (NÃO PERSISTIDO NO STORAGE)
+    // ==============================================
+    const STATE = {
+      currentStep: 0, // 0 = intro, 1 = vaga, 2 = zap, 3 = combo, 4 = urna, 5 = mapa
+      
+      // sub-fluxo vaga arrombada
+      vagaIndex: 0,
+      vagaPoints: 0,
+      vagaAnswered: false,
+      
+      // sub-fluxo zap condominio
+      zapIndex: 0,
+      zapAnswered: false,
+      
+      // sub-fluxo combo senador
+      comboOpened: false,
+      
+      // sub-fluxo urna
+      urnList: [], // lista ordenada do usuário
+      urnaSuccess: false,
+      urnaAttempts: 0,
+      
+      // sub-fluxo mapa astral
+      mapaIndex: 0,
+      mapaChoices: [], // acumula {pergunta_id, cargoFoco}
+      
+      // dados do lead capturado
+      leadContact: "",
+      leadOptin: true
+    };
+
+    // ordem correta da urna eletrônica brasileira (eleições 2026)
+    const CORRECT_URN_KEYS = [
+      'deputado_federal',
+      'deputado_estadual',
+      'senador_1',
+      'senador_2',
+      'governador',
+      'presidente'
+    ];
+
+    const URN_META = {
+      'deputado_federal': { nome: "1º deputado federal (4 dígitos)", icon: "👔" },
+      'deputado_estadual': { nome: "2º deputado estadual / distrital (5 dígitos)", icon: "📋" },
+      'senador_1': { nome: "3º senador - 1ª vaga (3 dígitos)", icon: "🏛️" },
+      'senador_2': { nome: "4º senador - 2ª vaga (3 dígitos)", icon: "🏛️" },
+      'governador': { nome: "5º governador e vice (2 dígitos)", icon: "🏢" },
+      'presidente': { nome: "6º presidente e vice (2 dígitos)", icon: "🇧🇷" }
+    };
+
+    // hints das posições erradas na urna
+    const URN_CORRECT_HINTS = {
+      'deputado_federal': "brasília em primeiro. o deputado federal abre a digitação na urna para as leis nacionais.",
+      'deputado_estadual': "depois da união, o estado. o deputado estadual é o segundo colocado da lista eletiva.",
+      'senador_1': "parlamento sênior. o primeiro senador de sua chapa é o terceiro papel digitado na urna.",
+      'senador_2': "dupla de dois. o segundo senador senta logo na sequência de seu colega para fechar o senado.",
+      'governador': "voto executivo local. na reta final, é chegado o momento de decidir a governabilidade do estado.",
+      'presidente': "decisão nacional final. o líder do país inteiro encerra a votação na urna eletrônica de 2026."
+    };
+
+    // ==============================================
+    // FUNÇÃO ISOLADA DE CAPTURA DE LEAD (EXPLICITAMENTE PEDIDA)
+    // ==============================================
+    /**
+     * recebe os dados digitados do lead (contato)
+     * e o consentimento do optin informados pela usuária.
+     * atualmente salva os dados apenas em memória na sessão,
+     * servindo como gancho (hook) perfeito para futuras
+     * conexões de API de CRM, Zapier, Webhooks ou banco de dados.
+     */
+    function salvarLead(contato, optinAceito) {
+      console.log("-----------------------------------------");
+      console.log("🎣 [captura de lead ativa no minisite]");
+      console.log("contato recebido:", contato);
+      console.log("interessado em futuros cursos (opt-in):", optinAceito ? "sim" : "não");
+      console.log("estágio de processamento público: aguardando webhook de produção...");
+      console.log("-----------------------------------------");
+      
+      // guarda no estado interno para usar no mapa final
+      STATE.leadContact = contato;
+      STATE.leadOptin = optinAceito;
+      
+      // simulando operação síncrona sem travamento do fluxo do usuário
+      return true;
+    }
+
+    // ==============================================
+    // NAVEGAÇÃO ENTRE ETAPAS DO PROGRAMA
+    // ==============================================
+    function changeScreen(prevScreen, nextScreen) {
+      const activeDiv = document.getElementById(`screen-${prevScreen}`);
+      const nextDiv = document.getElementById(`screen-${nextScreen}`);
+      
+      if (activeDiv) {
+        activeDiv.classList.remove('screen-active');
+        activeDiv.classList.add('screen-hidden');
+      }
+      
+      if (nextDiv) {
+        nextDiv.classList.remove('screen-hidden');
+        nextDiv.classList.add('screen-active');
+      }
+      
+      // atualizações de estado e progresso
+      if (nextScreen === 'vaga') {
+        STATE.currentStep = 1;
+        initVagaFlow();
+      } else if (nextScreen === 'zap') {
+        STATE.currentStep = 2;
+        initZapFlow();
+      } else if (nextScreen === 'combo') {
+        STATE.currentStep = 3;
+        initComboFlow();
+      } else if (nextScreen === 'urna') {
+        STATE.currentStep = 4;
+        initUrnaFlow();
+      } else if (nextScreen === 'mapa') {
+        STATE.currentStep = 5;
+        initMapaFlow();
+      } else if (nextScreen === 'intro') {
+        STATE.currentStep = 0;
+      }
+      
+      updateStepperUI();
+    }
+
+    // atualiza indicador visual superior (Zeigarnik progress tracker)
+    function updateStepperUI() {
+      const bar = document.getElementById('progress-bar');
+      const label = document.getElementById('stepper-label');
+      const dotsContainer = document.getElementById('step-dots');
+      
+      if (STATE.currentStep === 0) {
+        label.innerText = "introdução";
+        bar.style.width = "5%";
+      } else {
+        label.innerText = `etapa ${STATE.currentStep} de 5`;
+        const percentage = (STATE.currentStep / 5) * 100;
+        bar.style.width = `${percentage}%`;
+      }
+      
+      // colorir bolinhas correspondentes
+      const dots = dotsContainer.children;
+      for (let i = 0; i < dots.length; i++) {
+        if (STATE.currentStep === 0) {
+          dots[i].className = "w-2 h-2 rounded-full bg-wine-light";
+        } else if (i < STATE.currentStep) {
+          dots[i].className = "w-2 h-2 rounded-full bg-accent";
+        } else {
+          dots[i].className = "w-2 h-2 rounded-full bg-wine-light";
+        }
+      }
+    }
+
+    // ==============================================
+    // FLUXO TELA 1: VAGA ARROMBADA
+    // ==============================================
+    function initVagaFlow() {
+      STATE.vagaIndex = 0;
+      STATE.vagaPoints = 0;
+      showNextVagaCard();
+    }
+
+    function showNextVagaCard() {
+      STATE.vagaAnswered = false;
+      const currentQuest = CONFIG.vagasQuest[STATE.vagaIndex];
+      
+      document.getElementById('vaga-counter').innerText = `vaga ${STATE.vagaIndex + 1} de ${CONFIG.vagasQuest.length}`;
+      document.getElementById('vaga-title').innerText = currentQuest.titulo;
+      document.getElementById('vaga-desc').innerText = currentQuest.descr;
+      
+      const optionsContainer = document.getElementById('vaga-options');
+      optionsContainer.innerHTML = '';
+      
+      const feedbackBox = document.getElementById('vaga-feedback-box');
+      feedbackBox.classList.add('hidden');
+      
+      document.getElementById('btn-next-vaga').classList.add('hidden');
+      
+      // gera botões de opção interativa com triplo destaque na lateral esquerda
+      currentQuest.opcoes.forEach(cargoOption => {
+        const btn = document.createElement('button');
+        btn.className = "w-full py-3 px-4 bg-wine-card hover:bg-wine-light active:bg-wine-light text-white rounded-xl text-left text-xs font-semibold border border-white/5 flex justify-between items-center transition-all";
+        btn.innerHTML = `<span>• ${cargoOption}</span><span class="text-accent text-[10px]">selecionar</span>`;
+        btn.onclick = () => selectVagaAnswer(btn, cargoOption, currentQuest.respostaCorreta);
+        optionsContainer.appendChild(btn);
+      });
+    }
+
+    function selectVagaAnswer(clickedBtn, selectedAnswer, correctAnswer) {
+      if (STATE.vagaAnswered) return;
+      STATE.vagaAnswered = true;
+      
+      const optionsContainer = document.getElementById('vaga-options');
+      const buttons = optionsContainer.getElementsByTagName('button');
+      
+      // feedback visual nos bots de opções
+      for (let btn of buttons) {
+        const optionText = btn.firstElementChild.innerText.substring(2); // remove o "• "
+        
+        if (optionText === correctAnswer) {
+          btn.className = "w-full py-3 px-4 card-correct text-white rounded-xl text-left text-xs font-bold border flex justify-between items-center transition-all";
+          btn.innerHTML = `<span>✓ ${correctAnswer}</span><span class="text-green-400 text-[10px]">correto</span>`;
+        } else if (optionText === selectedAnswer && selectedAnswer !== correctAnswer) {
+          btn.className = "w-full py-3 px-4 card-wrong text-white/60 rounded-xl text-left text-xs font-semibold border flex justify-between items-center transition-all";
+          btn.innerHTML = `<span>✗ ${selectedAnswer}</span><span class="text-red-400 text-[10px]">errado</span>`;
+        } else {
+          btn.className = "w-full py-3 px-4 bg-wine-deep/40 text-white/30 rounded-xl text-left text-xs border border-white/5 flex justify-between items-center transition-all cursor-not-allowed";
+        }
+      }
+      
+      // montagem da explicação
+      const currentQuest = CONFIG.vagasQuest[STATE.vagaIndex];
+      const feedbackBox = document.getElementById('vaga-feedback-box');
+      feedbackBox.classList.remove('hidden');
+      
+      if (selectedAnswer === correctAnswer) {
+        STATE.vagaPoints++;
+        feedbackBox.className = "rounded-xl p-4 bg-green-500/10 border-l-4 border-green-500 text-xs text-white/90 leading-relaxed transition-all duration-200 mt-3";
+        feedbackBox.innerHTML = `<strong>ponto seu!</strong> ${currentQuest.feedback}`;
+      } else {
+        feedbackBox.className = "rounded-xl p-4 bg-red-500/10 border-l-4 border-red-500 text-xs text-white/90 leading-relaxed transition-all duration-200 mt-3";
+        feedbackBox.innerHTML = `<strong>ops!</strong> a resposta certa era <strong>${correctAnswer}</strong>. ${currentQuest.feedback}`;
+      }
+      
+      // habilita botão de avançar na tela
+      document.getElementById('btn-next-vaga').classList.remove('hidden');
+    }
+
+    function nextVaga() {
+      if (STATE.vagaIndex < CONFIG.vagasQuest.length - 1) {
+        STATE.vagaIndex++;
+        showNextVagaCard();
+      } else {
+        changeScreen('vaga', 'zap');
+      }
+    }
+
+    // ==============================================
+    // FLUXO TELA 2: ZAP DO CONDOMÍNIO
+    // ==============================================
+    function initZapFlow() {
+      STATE.zapIndex = 0;
+      loadZapMessage();
+    }
+
+    function loadZapMessage() {
+      STATE.zapAnswered = false;
+      const data = CONFIG.zapMensagens[STATE.zapIndex];
+      
+      document.getElementById('zap-counter').innerText = `mensagem ${STATE.zapIndex + 1} de ${CONFIG.zapMensagens.length}`;
+      document.getElementById('zap-sender').innerText = data.remetente;
+      document.getElementById('zap-sender').className = `text-[10px] font-bold ${data.cor} pl-2`;
+      document.getElementById('zap-message').innerText = data.mensagem;
+      
+      // apagar bolha de resposta e box de auxilio
+      document.getElementById('zap-bubble-right').classList.add('hidden');
+      document.getElementById('zap-explanation-box').classList.add('hidden');
+      document.getElementById('btn-next-zap').classList.add('hidden');
+      
+      // renderizar botões de resposta do player
+      const container = document.getElementById('zap-buttons-container');
+      container.innerHTML = '';
+      
+      document.getElementById('zap-options-box').classList.remove('hidden');
+      
+      data.opcoes.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = "w-full py-3 px-4 bg-wine-card hover:bg-wine-light active:bg-wine-light text-white text-xs text-left rounded-xl border border-white/5 leading-relaxed font-medium transition-all block";
+        btn.innerText = opt.texto;
+        btn.onclick = () => selectZapReply(opt, data);
+        container.appendChild(btn);
+      });
+    }
+
+    function selectZapReply(selectedOption, currentZap) {
+      if (STATE.zapAnswered) return;
+      STATE.zapAnswered = true;
+      
+      // esconder opções
+      document.getElementById('zap-options-box').classList.add('hidden');
+      
+      // preenche bolha da direita simulando resposta
+      const replyBubble = document.getElementById('zap-bubble-right');
+      const replyText = document.getElementById('zap-reply-text');
+      replyText.innerText = selectedOption.texto;
+      replyBubble.classList.remove('hidden');
+      
+      // som fake ou scroll no chat simulado
+      const chatContainer = document.getElementById('chat-messages-container');
+      setTimeout(() => {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }, 50);
+      
+      // mostrar caixa de feedback/educacional
+      const explBox = document.getElementById('zap-explanation-box');
+      explBox.classList.remove('hidden');
+      
+      if (selectedOption.correta) {
+        explBox.className = "mt-3 rounded-xl p-3 bg-green-500/10 border-l-4 border-green-500 text-xs text-white/90 leading-relaxed";
+        explBox.innerHTML = `<strong>resposta ideal:</strong> ${selectedOption.feedback}`;
+      } else {
+        explBox.className = "mt-3 rounded-xl p-3 bg-red-500/10 border-l-4 border-red-500 text-xs text-white/90 leading-relaxed";
+        explBox.innerHTML = `<strong>tia cleide vai ficar confusa:</strong> ${selectedOption.feedback}`;
+      }
+      
+      document.getElementById('btn-next-zap').classList.remove('hidden');
+    }
+
+    function nextZap() {
+      if (STATE.zapIndex < CONFIG.zapMensagens.length - 1) {
+        STATE.zapIndex++;
+        loadZapMessage();
+      } else {
+        changeScreen('zap', 'combo');
+      }
+    }
+
+    // ==============================================
+    // FLUXO TELA 3: COMBO SENADOR (Unboxing)
+    // ==============================================
+    function initComboFlow() {
+      STATE.comboOpened = false;
+      
+      // resetar estados visuais da caixa física
+      const supl1 = document.getElementById('suplente-1');
+      const supl2 = document.getElementById('suplente-2');
+      const avatar = document.getElementById('senador-avatar');
+      const boxModel = document.getElementById('senator-box-model');
+      const glow = document.getElementById('box-glow');
+      
+      supl1.style.opacity = '0';
+      supl1.style.transform = 'translate(0, 0) scale(0.5)';
+      
+      supl2.style.opacity = '0';
+      supl2.style.transform = 'translate(0, 0) scale(0.5)';
+      
+      avatar.style.opacity = '0';
+      avatar.style.transform = 'scale(0.9)';
+      
+      boxModel.classList.add('animate-pulse-subtle');
+      glow.className = "absolute inset-0 bg-accent/20 rounded-full blur-xl scale-95 transition-all duration-300";
+      
+      document.getElementById('unbox-heading').innerHTML = `toque na caixa para confirmar o voto em senador!`;
+      document.getElementById('unbox-desc').innerText = "você vota em 2 senadores por estado em 2026. mas a sua cédula vem com algo escondido de fábrica. aperte acima para conferir o combo.";
+      
+      document.getElementById('btn-next-combo').classList.add('hidden');
+    }
+
+    function triggerUnboxing() {
+      if (STATE.comboOpened) return;
+      STATE.comboOpened = true;
+      
+      const supl1 = document.getElementById('suplente-1');
+      const supl2 = document.getElementById('suplente-2');
+      const avatar = document.getElementById('senador-avatar');
+      const boxModel = document.getElementById('senator-box-model');
+      const glow = document.getElementById('box-glow');
+      
+      // desativa pulso e ativa explosão de borda cívica
+      boxModel.classList.remove('animate-pulse-subtle');
+      boxModel.classList.add('animate-shake');
+      glow.className = "absolute inset-0 bg-accent/60 rounded-full blur-2xl scale-110 transition-all duration-500";
+      
+      // anima o senador tomando frente
+      setTimeout(() => {
+        avatar.style.opacity = '1';
+        avatar.style.transform = 'scale(1)';
+        
+        // salta suplente 1 para esquerda-topo
+        supl1.style.opacity = '1';
+        supl1.style.transform = 'translate(-35px, -35px) scale(1)';
+        
+        // salta suplente 2 para direita-topo
+        supl2.style.opacity = '1';
+        supl2.style.transform = 'translate(35px, -30px) scale(1)';
+        
+        // textos explicativos atualizados
+        document.getElementById('unbox-heading').innerHTML = `<span class="text-accent font-extrabold text-2xl font-sora block mb-0.5">surpresa! comprando 1, levando 3</span>`;
+        document.getElementById('unbox-desc').innerHTML = "você votou em 1 senador, mas escolheu 3 sem saber. cada senador vem com 2 suplentes de herança corporativa. se ele desistir, virar ministro ou assumir cargo externo, quem governa são os suplentes ocultados na embalagem.";
+        
+        document.getElementById('btn-next-combo').classList.remove('hidden');
+      }, 400);
+    }
+
+    // ==============================================
+    // FLUXO TELA 4: FILA DA URNA ELECTRONICA
+    // ==============================================
+    function initUrnaFlow() {
+      STATE.urnaSuccess = false;
+      STATE.urnaAttempts = 0;
+      
+      // clona e baralha as chaves de cargos
+      STATE.urnList = [...CORRECT_URN_KEYS].sort(() => Math.random() - 0.5);
+      
+      document.getElementById('btn-validate-urna').classList.remove('hidden');
+      document.getElementById('btn-next-urna').classList.add('hidden');
+      document.getElementById('urna-feedback-banner').classList.add('hidden');
+      
+      renderUrnaList();
+    }
+
+    function renderUrnaList() {
+      const container = document.getElementById('sortable-list');
+      container.innerHTML = '';
+      
+      STATE.urnList.forEach((key, index) => {
+        const itemData = URN_META[key];
+        const rawKeyName = key.replace('_1', '').replace('_2', '');
+        const correctIndex = CORRECT_URN_KEYS.indexOf(key);
+        
+        const card = document.createElement('div');
+        card.id = `urna-item-${key}`;
+        card.className = "bg-wine-card border border-white/5 rounded-xl p-3 flex items-center justify-between transition-all duration-200 select-none";
+        
+        // corpo estrutural e setas de ordenação direta ( mobile first )
+        card.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <span class="text-xs font-mono font-bold text-accent bg-wine-deep w-6 h-6 rounded-full flex items-center justify-center">${index + 1}º</span>
+            <div class="flex flex-col">
+              <span class="text-[12px] font-bold text-white flex items-center gap-1.5">${itemData.icon} ${itemData.nome}</span>
+            </div>
+          </div>
+          <div class="flex items-center space-x-1.5">
+            <!-- setas de comando velozes -->
+            <button onclick="shiftUrnItem(${index}, -1); event.stopPropagation();" class="w-8 h-8 rounded-lg bg-wine-deep border border-white/10 hover:border-accent text-accent active:bg-accent active:text-white flex items-center justify-center text-xs transition-colors" ${index === 0 ? 'disabled style="opacity: 0.2; pointer-events: none;"' : ''}>▲</button>
+            <button onclick="shiftUrnItem(${index}, 1); event.stopPropagation();" class="w-8 h-8 rounded-lg bg-wine-deep border border-white/10 hover:border-accent text-accent active:bg-accent active:text-white flex items-center justify-center text-xs transition-colors" ${index === STATE.urnList.length - 1 ? 'disabled style="opacity: 0.2; pointer-events: none;"' : ''}>▼</button>
+          </div>
+        `;
+        
+        container.appendChild(card);
+      });
+    }
+
+    function shiftUrnItem(index, direction) {
+      if (STATE.urnaSuccess) return;
+      const targetIndex = index + direction;
+      
+      if (targetIndex >= 0 && targetIndex < STATE.urnList.length) {
+        // swap em memoria
+        const temp = STATE.urnList[index];
+        STATE.urnList[index] = STATE.urnList[targetIndex];
+        STATE.urnList[targetIndex] = temp;
+        
+        renderUrnaList();
+      }
+    }
+
+    function validateUrnaOrder() {
+      if (STATE.urnaSuccess) return;
+      STATE.urnaAttempts++;
+      
+      let incorrectCount = 0;
+      let firstErrorKey = null;
+      
+      // verifica cargo a cargo em relacao ao gabarito oficial do tse
+      STATE.urnList.forEach((key, index) => {
+        const correctIndex = CORRECT_URN_KEYS.indexOf(key);
+        const card = document.getElementById(`urna-item-${key}`);
+        
+        if (index === correctIndex) {
+          card.className = "bg-green-500/10 border-2 border-green-500 rounded-xl p-3 flex items-center justify-between transition-all duration-200 shadow-md";
+        } else {
+          incorrectCount++;
+          card.className = "bg-red-500/10 border-2 border-red-500 rounded-xl p-3 flex items-center justify-between transition-all duration-200 animate-shake shadow-md";
+          if (!firstErrorKey) firstErrorKey = key;
+        }
+      });
+      
+      const banner = document.getElementById('urna-feedback-banner');
+      banner.classList.remove('hidden');
+      
+      if (incorrectCount === 0) {
+        STATE.urnaSuccess = true;
+        banner.className = "rounded-xl p-3 bg-green-500/20 border-l-4 border-green-500 text-xs text-white/90 leading-relaxed transition-all mt-3";
+        banner.innerHTML = `<strong>gabarito perfeito!</strong> você ordenou os cargos exatamente na ordem oficial que vai carregar na tela da urna em 2026. parabéns pela dedicação.`;
+        
+        // alterna botões vitais
+        document.getElementById('btn-validate-urna').classList.add('hidden');
+        document.getElementById('btn-next-urna').classList.remove('hidden');
+      } else {
+        banner.className = "rounded-xl p-3 bg-red-500/20 border-l-4 border-red-500 text-xs text-white/90 leading-relaxed transition-all mt-3";
+        
+        // recupera dica especifica do primeiro cargo que detectou erro
+        const cleanKey = firstErrorKey.replace('_1', '').replace('_2', '');
+        const hintText = URN_CORRECT_HINTS[cleanKey] || "alinhe as esferas. deputados federais e estaduais entram no inicio.";
+        
+        banner.innerHTML = `<strong>ainda há ${incorrectCount} fora do lugar!</strong> dica: <em>${hintText}</em>`;
+      }
+    }
+
+    // ==============================================
+    // FLUXO TELA 5: MAPA CÍVICO & CAPTURA LEAD
+    // ==============================================
+    function initMapaFlow() {
+      STATE.mapaIndex = 0;
+      STATE.mapaChoices = [];
+      
+      document.getElementById('mapa-quiz-wrapper').classList.remove('hidden');
+      document.getElementById('mapa-capture-wrapper').classList.add('hidden');
+      document.getElementById('mapa-result-wrapper').classList.add('hidden');
+      
+      loadMapaQuestion();
+    }
+
+    function loadMapaQuestion() {
+      const qData = CONFIG.mapaPerguntas[STATE.mapaIndex];
+      
+      document.getElementById('mapa-q-counter').innerText = `pergunta ${STATE.mapaIndex + 1} de ${CONFIG.mapaPerguntas.length}`;
+      document.getElementById('mapa-question').innerText = qData.pergunta;
+      
+      const container = document.getElementById('mapa-options-container');
+      container.innerHTML = '';
+      
+      qData.opcoes.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = "w-full py-3 px-4 bg-wine-card hover:bg-wine-light active:bg-wine-light text-white text-xs text-left rounded-xl border border-white/5 leading-snug transition-all";
+        btn.innerText = opt.texto;
+        btn.onclick = () => selectMapaOption(opt.cargoFoco);
+        container.appendChild(btn);
+      });
+    }
+
+    function selectMapaOption(cargoFoco) {
+      STATE.mapaChoices.push(cargoFoco);
+      
+      if (STATE.mapaIndex < CONFIG.mapaPerguntas.length - 1) {
+        STATE.mapaIndex++;
+        loadMapaQuestion();
+      } else {
+        // fim do quiz político: transitar para a captura do lead
+        document.getElementById('mapa-quiz-wrapper').classList.add('hidden');
+        document.getElementById('mapa-capture-wrapper').classList.remove('hidden');
+      }
+    }
+
+    function handleLeadSubmit() {
+      const input = document.getElementById('lead-contact');
+      const optin = document.getElementById('lead-optin').checked;
+      const errorText = document.getElementById('lead-error');
+      
+      const contactVal = input.value.trim();
+      
+      // Validador simples de e-mail ou celular brasileiro (mínimo 10 digitos pra fones)
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactVal);
+      const isPhone = /^[0-9\s()+-]{10,20}$/.test(contactVal.replace(/\D/g, ''));
+      
+      if (!contactVal || (!isEmail && !isPhone)) {
+        errorText.classList.remove('hidden');
+        input.classList.add('border-red-500');
+        return;
+      }
+      
+      // esconde erro e valida formulário de lead
+      errorText.classList.add('hidden');
+      input.classList.remove('border-red-500');
+      
+      salvarLead(contactVal, optin);
+      
+      // transicionar para os resultados finais calculados
+      generateAstralResults();
+    }
+
+    function generateAstralResults() {
+      // decide Sol e Ascendente basados nas respostas registradas no quiz
+      // Caso aja repetição do cargo de foco, vira o SOL de cara.
+      const counts = {};
+      let maxCargo = 'governador'; // padrão
+      let maxCount = 0;
+      
+      STATE.mapaChoices.forEach(c => {
+        counts[c] = (counts[c] || 0) + 1;
+        if (counts[c] > maxCount) {
+          maxCount = counts[c];
+          maxCargo = c;
+        }
+      });
+      
+      // solar e ascendente calculados
+      const solKey = maxCargo;
+      // pega o outro que sobrou ou põe presidente/deputado de apoio
+      const otherCargos = STATE.mapaChoices.filter(c => c !== solKey);
+      const ascKey = otherCargos.length > 0 ? otherCargos[0] : (solKey === 'governador' ? 'presidente' : 'governador');
+      
+      const solData = CONFIG.cargos[solKey];
+      const ascData = CONFIG.cargos[ascKey];
+      
+      document.getElementById('astral-sol').innerText = solData.nome;
+      document.getElementById('astral-sol-desc').innerText = solData.solDesc;
+      
+      document.getElementById('astral-ascendente').innerText = ascData.nome;
+      document.getElementById('astral-asc-desc').innerText = ascData.ascDesc;
+      
+      // configurar link do CTA com a URL de configurações
+      const ctaBtn = document.getElementById('cta-button-link');
+      ctaBtn.href = CONFIG.ctaUrl;
+      
+      // mudar para a sub-tela de resultado de perfil
+      document.getElementById('mapa-capture-wrapper').classList.add('hidden');
+      document.getElementById('mapa-result-wrapper').classList.remove('hidden');
+    }
+
+    function shareStory() {
+      const shareData = {
+        title: 'meu mapa astral político 2026',
+        text: `descobri meus 6 votos das eleições de 2026 em 3 minutos de forma leve e apartidária! faz o teste também:`,
+        url: window.location.href
+      };
+      
+      if (navigator.share) {
+        navigator.share(shareData)
+          .then(() => console.log('compartilhado com sucesso'))
+          .catch((err) => console.log('erro ao compartilhar:', err));
+      } else {
+        // Fallback: copiar para área de transferência
+        const rawText = `${shareData.text} ${shareData.url}`;
+        navigator.clipboard.writeText(rawText)
+          .then(() => {
+            alert('mensagen copiada para a área de transferência! jogue no whatsapp ou direct do insta.');
+          })
+          .catch(() => {
+            alert('use o link da barra de navegação para enviar aos amigos!');
+          });
+      }
+    }
+  </script>
+</body>
+</html>

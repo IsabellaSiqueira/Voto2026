@@ -1,0 +1,6 @@
+{
+  "name": "Guia de Cargos Eleições 2026",
+  "description": "Mini-site interativo e gamificado de educação cívica sobre as funções dos cargos que serão votados nas eleições gerais de 2026 no Brasil.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
